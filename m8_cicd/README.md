@@ -130,7 +130,7 @@ permissiion to the Jenkins user to run that file:
 
 ![  ](img/jenkins-permission.png)
 
-Configured Job to run tests and build Java Application. We created a new freestlyle job:
+Configured Job to run tests and build Java Application. We created a new freestyle job:
 
 ![ ](img/java-maven-build.png)
 
@@ -140,12 +140,101 @@ you can then see the jar file:
 
 ![  ](img/target.png)
 
-### 2.2 Make Docker available on Jenkins server
+### 2.3 Make Docker available on Jenkins server 
 
-![ _](img/uikk.png)
+Made Docker available in Jenkins container by mounting (making available) 3 volumes in the new Jenkins container:
 
+- mount jenkins_home which already exists
+- mount Docker volume on the host server droplet : same destination on the container itself
+- mount Docker runtime where Docker commands get executed from (we are using a variable that points to the Docker executable binary on the server host droplet) : inside the container
 
-![ _](img/uikk.png)
+```bash
+$ docker stop [container id]
+$ docker run -p 8080:8080 -p 50000:50000 -d \
+    -v jenkins_home:/var/jenkins_home \
+    -v /var/run/docker.sock:var/run/docker.sock \
+    -v $(which docker):/usr/bin/docker \
+    jenkins/jenkins:lts
+```
+All of our previous data is available at the new Jenkins container since the volume jenkins_home already exists, and we mounted on the new container:
+
+![_](img/all-jobs.png)
+
+>> **Note**
+> 
+> If running the steps above don´t make Docker available in the Jenkins container, this [fix here](https://stackoverflow.com/questions/73110198/jenkins-error-buildind-docker-lib-x86-64-linux-gnu-libc-so-6-version-glibc) can be a solution. 
+> It installs Docker inside de Jenkins container, not on the server host.
+
+Fixed permissions on docker.sock:  change privilege to read and write for all users with:
+
+```bash
+$ sudo chmod 666 /var/run/docker.sock
+```
+
+As a test:
+
+![_](img/test.png)
+
+Configured Job to build Docker Image. Configure the java-maven-job removing the "Test" build step, add execute shell step and build the project:
+
+![_](img/docker-image.png)
+
+![_ ](img/docker-image-success.png)
+
+#### 2.3.1 Configured Job to push Image to DockerHub
+
+Prerequisite: 
+
+    - Account on DockerHub
+    - Created a repository on DockerHub
+    - Created Credentials for DockerHub in Jenkins UI:
+
+ ![_ ](img/credentials.png)
+
+Add credentials/set global environment to Docker login inside the job:
+
+ ![ ](img/docker-login.png)
+
+Tag Docker Image with your DockerHub repository, login and push to repository:
+
+``` bash
+docker build -t flaviassantos/my-repo:jma-1.0 .
+docker login -u $USERNAME -p $PASSWORD
+docker push flaviassantos/my-repo:jma-1.0
+```
+![_](img/steps.png)
+
+![_ ](img/job-push.png)
+
+>>**Note**
+> 
+> Best practice is to provide the password as a standard input and not in the command line parameter:
+
+![_ ](img/stdin.png)
+
+#### 2.3.2 Image to Nexus Repository
+
+Configured “insecure-registries” on Droplet server (daemon.json file since the host server is a Linux machine)
+
+>>**Note**
+> 
+> Since the installation 
+
+``` bash
+$ vim /etc/docker/daemon.json
+
+{
+  "insecure-registries" : ["[Nexus´s droplet IP]:8083"]
+}
+
+$ systemctl restart docker
+```
+
+❏ Fixed permission for docker.sock again after restart of Jenkins container
+❏ Created Credentials for Nexus in Jenkins UI
+❏ Tag Docker Image with your Nexus host and repository, login and push to
+repository
+
 ### 2.4 Create different Jenkins job types (Freestyle, Pipeline, Multibranch pipeline) for the Java Maven project with Jenkinsfile to:
 #### a. Connect to the application’s git repository 
 #### b. Build Jar

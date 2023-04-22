@@ -56,15 +56,28 @@ $ netstat -lnpt
 
 ![Nexus Firewall](img/nexus-firewall.png)
 
+You can login to Nexus by getting the admin password and "Disable anonymous access":
+
+$ ls /opt/sonatype-work/nexus3/
+
+$ cat /opt/sonatype-work/nexus3/admin.password
+
 ## Java Gradle Project: Build Jar & Upload to Nexus
 
 We will upload a jar file from a Java Gradle project to existing hosted repository on Nexus. We need to configure the Gradle tool by giving it credentials on Nexus in order to use the special command for pushing the file into the remote repository. We also need to create Nexus user with permissions to upload artifact files in certain repositories.
 
 ### Create Manually a Local Nexus User
 
-Create a local user by going to Security->Users on Nexus UI and give it an anonymous role from now. We will create a new role for this user on Security->Roles and limit the permissions for it (best practice). This is going to be a role to upload a jar file and retrieve information about it, we can choose a ´nx-repository-view-maven2-maven-snapshots-*´ type of privilege. Then we assign this role to the user created:
+Create a local user by going to Security->Users on Nexus UI and give it an anonymous role 
+from now. We will create a new role for this user on Security->Roles and limit 
+the permissions for it (best practice). This is going to be a role to upload a jar
+file and retrieve information about it, we can choose a 
+´nx-repository-view-maven2-maven-snapshots-*´ type of privilege. 
+Then we assign this role to the user created:
 
-Usually you would not create manually a new user on Nexus, but instead you use integrate existing users from your company system by using LDAP integration and then give it Nexus permission.
+Usually you would not create manually a new user on Nexus, but instead you use 
+integrate existing users from your company system by using LDAP
+integration and then give it Nexus permission.
 
 ![Nexus Role](img/nx-role.png)
 
