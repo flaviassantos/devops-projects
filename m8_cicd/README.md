@@ -152,7 +152,7 @@ Made Docker available in Jenkins container by mounting (making available) 3 volu
 $ docker stop [container id]
 $ docker run -p 8080:8080 -p 50000:50000 -d \
     -v jenkins_home:/var/jenkins_home \
-    -v /var/run/docker.sock:var/run/docker.sock \
+    -v /var/run/docker.sock:/var/run/docker.sock \
     -v $(which docker):/usr/bin/docker \
     jenkins/jenkins:lts
 ```
@@ -168,7 +168,10 @@ All of our previous data is available at the new Jenkins container since the vol
 Fixed permissions on docker.sock:  change privilege to read and write for all users with:
 
 ```bash
-$ sudo chmod 666 /var/run/docker.sock
+$ ls -l /var/run/docker.sock
+$ exit 
+$ docker exec -it -u0 158cca0f88ce bash
+$ chmod 666 /var/run/docker.sock
 ```
 
 As a test:
@@ -216,9 +219,6 @@ docker push flaviassantos/my-repo:jma-1.0
 
 Configured “insecure-registries” on Droplet server (daemon.json file since the host server is a Linux machine)
 
->>**Note**
-> 
-> Since the installation 
 
 ``` bash
 $ vim /etc/docker/daemon.json
@@ -230,10 +230,17 @@ $ vim /etc/docker/daemon.json
 $ systemctl restart docker
 ```
 
-❏ Fixed permission for docker.sock again after restart of Jenkins container
-❏ Created Credentials for Nexus in Jenkins UI
-❏ Tag Docker Image with your Nexus host and repository, login and push to
+Fixed permission for docker.sock again after restart of Jenkins container
+
+```bash
+$ ls -l /var/run/docker.sock
+$ chmod 666 /var/run/docker.sock
+```
+Created Credentials for Nexus in Jenkins UI, tag Docker Image with our Nexus host and repository, login and push to
 repository
+
+![  _](img/nexus.png)
+
 
 ### 2.4 Create different Jenkins job types (Freestyle, Pipeline, Multibranch pipeline) for the Java Maven project with Jenkinsfile to:
 #### a. Connect to the application’s git repository 
