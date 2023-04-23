@@ -6,7 +6,7 @@
 
 Jenkins, Docker, DigitalOcean, Linux
 
-### 1.1 Created a Server dedicated to Jenkins on DigitalOcean
+### 1.1 Created a Server dedicated to Jenkins on DigitalOcean (choose ubuntu 18 or docker wont work when deploying to Nexus)
 ![_](img/server.png)
 
 ### 1.2 Configured Firewall Rules to open port 22 and port 8080 for our new Jenkins server
@@ -236,14 +236,43 @@ Fixed permission for docker.sock again after restart of Jenkins container
 $ ls -l /var/run/docker.sock
 $ chmod 666 /var/run/docker.sock
 ```
-Created Credentials for Nexus in Jenkins UI, tag Docker Image with our Nexus host and repository, login and push to
+Created Credentials for Nexus in Jenkins UI
+
+![ _](img/nx-credentials.png)
+
+Tag Docker Image with our Nexus host and repository, login and push to
 repository
+
+![  _](img/tag.png)
 
 ![  _](img/nexus.png)
 
 
 ### 2.4 Create different Jenkins job types (Freestyle, Pipeline, Multibranch pipeline) for the Java Maven project with Jenkinsfile to:
 #### a. Connect to the application’s git repository 
+
+Basic Pipeline Job: configured Git Repository
+
+![  _](img/conf-git.png)
+
+Created a valid Jenkinsfile with required fields. Some syntax examples:
+
+- Used Post attribute: execute some logic AFTER all stages executed
+
+  - Defined a Condition: to define the build status or build status change (always, success, failure, when)
+
+❏ Used an environment variable
+
+❏ Used Tools Attribute
+
+❏ Used a Parameter
+
+❏ Used an external Groovy Script
+
+❏ Used an Input Parameter
+
+![  _](img/tazg.png)
+
 #### b. Build Jar
 ![ _](img/uikk.png)
 #### c. Build Docker Image

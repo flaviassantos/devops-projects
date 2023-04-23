@@ -1,0 +1,87 @@
+#!/usr/bin/env groovy
+
+// Used Post attribute: execute some logic AFTER all stages executed
+CODE_CHANGES = getGitChanges()
+pipeline {
+    agent any
+    stages {
+        stage('build') {
+            when {
+                expression {
+                    BRANCH_NAME == 'dev' && CODE_CHANGES == true
+                }
+            }
+            steps {
+                script {
+                    echo "Building the application..."
+                }
+            }
+        }
+        stage('test') {
+            when {
+                expression {
+                    BRANCH_NAME == 'dev' || env.BRANCH_NAME == 'master'
+                }
+            }
+            steps {
+                script {
+                    echo "Testing the application..."
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    echo "Deploying the application..."
+                }
+            }
+        }
+    }
+    post {
+        always {
+            // ex. sending email to the team if the build fail
+        }
+        success {
+
+        }
+    }
+}
+
+// Used an environment variable
+
+#!/usr/bin/env groovy
+
+pipeline {
+    agent none
+    stages {
+        stage('build') {
+            steps {
+                script {
+                    echo "Building the application..."
+                }
+            }
+        }
+        stage('test') {
+            steps {
+                script {
+                    echo "Testing the application..."
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    echo "Deploying the application..."
+                }
+            }
+        }
+    }
+}
+
+// Used Tools Attribute
+
+// Used a Parameter
+
+// Used an external Groovy Script
+
+// Used an Input Parameter
