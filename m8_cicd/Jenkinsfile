@@ -47,8 +47,179 @@ pipeline {
     }
 }
 
-// Used an environment variable
+// Used an environment variable (http://164.92.173.252:8080/env-vars.html/)
 
+#!/usr/bin/env groovy
+
+pipeline {
+    agent any
+    environment {
+        NEW_VERSION = '1.3.0' // would calculate from the code
+        SERVER_CREDENTIALS = credentials('nexins-credentials') // install a separated plugin in Jenkins
+    }
+    stages {
+        stage('build') {
+            steps {
+                script {
+                    echo "Building the application..."
+                    echo "building version ${NEW_VERSION}"
+                }
+            }
+        }
+        stage('test') {
+            steps {
+                script {
+                    echo "Testing the application..."
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    echo "Deploying the application..."
+                    // sh "${nexins-credentials}"
+                    withCredentials([
+                        usernamePassword(credentials: 'nexins-credentials', usernameVariable: USER,passwordVariable: PWD)
+                        ]) {
+                            sh "some script ${USER}"
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Used Tools Attribute
+#!/usr/bin/env groovy
+
+pipeline {
+    agent any
+    tools { // 3 built in tools: maven, jdk and gradle
+        maven 'Maven' // name of the plugin configured in Jenkins
+
+    }
+    stages {
+        stage('build') {
+            steps {
+                script {
+                    echo "Building the application..."
+                    sh "mvn install"
+                }
+            }
+        }
+        ...
+    }
+}
+
+
+// Used a Parameter
+#!/usr/bin/env groovy
+
+pipeline {
+    agent any
+    parameters {
+        string(name: 'VERSION', defaultValue:'', description:'version to deploy on prod')
+        choice(name: 'VERSION', choices: ['1.1.0', '1.2.0'], description: '')
+        booleanParam(name: 'executeTests', defaultValue: true, description: '')
+    }
+    stages {
+        stage('build') {
+            steps {
+                script {
+                    echo "Building the application..."
+                }
+            }
+        }
+        stage('test') {
+            when {
+                expression {
+                        params.executeTests == true
+                    }
+            }
+            steps {
+                script {
+                    echo "Testing the application..."
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    echo "Deploying the application..."
+                    echo "Deploying version ${params.VERSION}"
+                }
+            }
+        }
+    }
+}
+
+// Used an external Groovy Script
+#!/usr/bin/env groovy
+
+def gv
+
+pipeline {
+    agent any
+    tools {
+        maven 'Maven'
+    }
+    stages {
+        stage("init") {
+            steps {
+                script {
+                    gv = load "script.groovy"
+                }
+            }
+        }
+        stage("build jar") {
+            steps {
+                script {
+                    gv.buildJar()
+                }
+            }
+        }
+        stage("build image") {
+            steps {
+                script {
+                    gv.buildImage()
+                }
+            }
+        }
+        stage("deploy") {
+            steps {
+                script {
+                    gv.deployApp()
+                }
+            }
+        }
+    }
+}
+
+//---------------------------------------------------
+// the script.groovy would look like:
+
+def buildJar() {
+    echo "building the application..."
+    sh 'mvn package'
+}
+
+def buildImage() {
+    echo "building the docker image..."
+    withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+        sh 'docker build -t nanajanashia/demo-app:jma-2.0 .'
+        sh "echo $PASS | docker login -u $USER --password-stdin"
+        sh 'docker push nanajanashia/demo-app:jma-2.0'
+    }
+}
+
+def deployApp() {
+    echo 'deploying the application...'
+}
+
+return this
+//---------------------------------------------------
+
+// Used an Input Parameter
 #!/usr/bin/env groovy
 
 pipeline {
@@ -69,19 +240,20 @@ pipeline {
             }
         }
         stage('deploy') {
+            input {
+                message "Select the environment to deploy to"
+                ok "Done"
+                parameters{
+                    choice(name: 'ENV', choices: ['dev', 'staging', 'prod'], description: '')
+                }
+            }
             steps {
                 script {
                     echo "Deploying the application..."
+                    echo "Deploying to ${ENV}"
                 }
             }
         }
     }
 }
 
-// Used Tools Attribute
-
-// Used a Parameter
-
-// Used an external Groovy Script
-
-// Used an Input Parameter

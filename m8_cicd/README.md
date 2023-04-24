@@ -251,7 +251,7 @@ repository
 ### 2.4 Create different Jenkins job types (Freestyle, Pipeline, Multibranch pipeline) for the Java Maven project with Jenkinsfile to:
 #### a. Connect to the application’s git repository 
 
-Basic Pipeline Job: configured Git Repository
+Configured Git Repository
 
 ![  _](img/conf-git.png)
 
@@ -267,14 +267,116 @@ Created a valid Jenkinsfile with required fields. Some syntax examples:
 
 ❏ Used a Parameter
 
-❏ Used an external Groovy Script
-
 ❏ Used an Input Parameter
 
-![  _](img/tazg.png)
+❏ Used an external Groovy Script, example after build:
 
-#### b. Build Jar
-![ _](img/uikk.png)
-#### c. Build Docker Image
-#### d Push to private DockerHub repository
-![ _](img/uikk.png)
+![  ](img/groovy.png)
+
+#### b. Basic Pipeline Job: build Jar, build Docker Image and push to private DockerHub repository
+
+![ _](img/build8.png)
+
+![ _](img/build8-script.png)
+
+The Jenkinsfile above can be improved to:
+
+![ ](img/build8-improved.png)
+
+#### c. Multibranch pipeline: added branch based logic in Jenkinsfile
+
+By adding a condition with BRANCH_NAME evnvironment variable in the Jenkinsfile of master and other branches:
+
+``` groovy
+#!/usr/bin/env groovy
+
+pipeline {
+    agent none
+    stages {
+        stage('test') {
+            steps {
+                script {
+                    echo "Testing the application..."
+                    echo "Executing pipeline for ${BRANCH_NAME}"
+                }
+            }
+        }
+        stage('build') {
+            when {
+                expression {
+                    BRANCH_NAME == 'master'
+                }
+            }
+            steps {
+                script {
+                    echo "Building the application..."
+                }
+            }
+        }
+        stage('deploy') {
+            when {
+                expression {
+                    BRANCH_NAME == 'master'
+                }
+            }
+            steps {
+                script {
+                    echo "Deploying the application..."
+                }
+            }
+        }
+    }
+}
+```
+
+![  ](img/multib.png)
+
+## 3. Create a Jenkins Shared Library
+
+Jenkins Shared Library is a feature of Jenkins that allows you to write and reuse code across multiple Jenkins pipelines. In other words, it's a collection of code that can be used in various Jenkins jobs and projects. This code can be used to perform common tasks, such as building, testing, and deploying applications.
+
+Shared libraries are important because they help standardize the way that code is written and executed across different Jenkins pipelines. This can improve code quality, reduce the amount of time spent on repetitive tasks, and make it easier to maintain and update pipelines.
+
+#### Technologies used:
+Jenkins, Groovy, Docker, Git, Java, Maven
+
+### 3.1 Create a Jenkins Shared Library to extract common build logic:
+
+![  ](img/1version.png)
+
+### 3.2 Create separate Git repository for Jenkins Shared Library project
+
+![   ](img/1version-git.png)
+
+### 3.2 Create functions in the JSL to use in the Jenkins pipeline Integrate and use the JSL in Jenkins Pipeline (globally and for a specific project in Jenkinsfile)
+
+❏ Used Parameters in Shared Library
+
+![  ](img/param.png)
+
+![  ](img/param-build.png)
+
+❏ Extracted logic into Groovy Classes
+
+![  ](img/docker-package.png)
+
+❏ Define Shared Library in Jenkinsfile directly (project scoped)
+
+First, remove the global library from Jenkins UI and fix the Jenkinsfile:
+
+![  ](img/project scope.png)
+
+## 4. Configure Webhook to trigger CI Pipeline automatically on every change
+
+#### Technologies used:
+Jenkins, GitLab, Git, Docker, Java, Maven
+
+#### Project Description:
+
+- Install GitLab Plugin in Jenkins
+- Configure GitLab access token and connection to Jenkins in GitHub project settings
+- Configure Jenkins to trigger the CI pipeline, whenever a change is pushed to GitHub
+
+![  ](img/webhooks.png)
+
+![ ](img/webhooks-jenkins.png)
