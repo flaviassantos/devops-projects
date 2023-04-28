@@ -380,3 +380,134 @@ Jenkins, GitLab, Git, Docker, Java, Maven
 ![  ](img/webhooks.png)
 
 ![ ](img/webhooks-jenkins.png)
+
+
+## 5. Dynamically Increment Application version in Jenkins Pipeline
+
+#### Technologies used:
+Jenkins, Docker, GitLab, Git, Java, Maven
+
+#### Project Description:
+
+### 5.1 Configure CI step
+
+- Increment version locally with maven build tool
+``` bash
+$ mvn build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion} versions:commit
+```
+
+![ ](img/versionm.png)
+
+- Increment version in Jenkins Pipeline
+  - Configured Jenkinsfile to increment version (steps "increment version" and "build image")
+      ``` groovy
+      #!/usr/bin/env groovy
+      
+      library identifier: 'jenkins-shared-library@master', retriever: modernSCM(
+              [$class: 'GitSCMSource',
+               remote: 'https://github.com/flaviassantos/jenkins-shared-library.git',
+               credentialsId: 'gitlab-credentials'
+              ]
+      )
+      
+      def gv
+      
+      pipeline {
+          agent any
+          tools {
+              maven 'Maven'
+          }
+          stages {
+              stage("init") {
+                  steps {
+                      script {
+                          gv = load "script.groovy"
+                      }
+                  }
+              }
+              stage('test') {
+                  steps {
+                      script {
+                          echo "Testing the application..."
+                          echo "Executing pipeline for ${BRANCH_NAME}"
+                      }
+                  }
+              }
+              stage('increment version') {
+                  steps {
+                      script {
+                          echo 'incrementing app version...'
+                          sh 'mvn build-helper:parse-version versions:set \
+                              -DnewVersion=\\\${parsedVersion.majorVersion}.\\\${parsedVersion.minorVersion}.\\\${parsedVersion.nextIncrementalVersion} \
+                              versions:commit'
+                          def matcher = readFile('pom.xml') =~ '<version>(.+)</version>'
+                          def version = matcher[0][1]
+                          env.IMAGE_NAME = "$version-$BUILD_NUMBER"
+                      }
+                  }
+              }
+              stage("build jar") {
+                  when {
+                      expression {
+                          BRANCH_NAME == 'master' | BRANCH_NAME == 'feature/increment-version'
+                      }
+                  }
+                  steps {
+                      script {
+                          buildJar()
+                      }
+                  }
+              }
+              stage("build image") {
+                  steps {
+                      script {
+                          buildImage("flaviassantos/my-repo:${IMAGE_NAME}")
+                          dockerLogin()
+                          dockerPush("flaviassantos/my-repo:${IMAGE_NAME}")
+                      }
+                  }
+              }
+              stage("deploy") {
+                  when {
+                      expression {
+                          BRANCH_NAME == 'master'
+                      }
+                  }
+                  steps {
+                      script {
+                          gv.deployApp()
+                      }
+                  }
+              }
+          }
+      }
+      ```
+      ![ ](img/shared-lib.png)
+  - 
+  - Adjusted Dockerfile file
+
+    ```Dockerfile
+    FROM openjdk:8-jre-alpine
+    
+    EXPOSE 8080
+    
+    COPY ./target/java-maven-app-*.jar /usr/app/
+    WORKDIR /usr/app
+    
+    CMD java -jar java-maven-app-*.jar
+    ```
+  - Executed Jenkins Pipeline
+
+  ![ ](img/j-pipeline.png)
+  
+  ![ ](img/docker-repo.png)
+
+### 5.2 Configure CI step: Commit version update of Jenkins back to Git repository
+
+![ ](img/build-commit.png)
+
+![ ](img/jenkins-commit.png)
+
+### 5.3 Configure Jenkins pipeline to not trigger automatically on CI build commit to avoid commit loop
+
+![ ](img/skip.png)
