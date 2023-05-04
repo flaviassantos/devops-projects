@@ -6,6 +6,12 @@
 
 Jenkins, Docker, DigitalOcean, Linux
 
+#### Gihub repos:
+
+[Jenkins Shared Library](https://github.com/flaviassantos/jenkins-shared-library)
+
+[Java Maven app](https://github.com/flaviassantos/java-maven-app)
+
 ### 1.1 Created a Server dedicated to Jenkins on DigitalOcean (choose ubuntu 18 or docker wont work when deploying to Nexus)
 ![_](img/server.png)
 
