@@ -2,6 +2,8 @@
 /venv
 /build
 /target
+/m12_terraform/terraform
+/m10_kubernetes/bootcamp-kubernetes
 
 # compiled output
 /dist
