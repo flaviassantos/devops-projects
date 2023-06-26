@@ -219,26 +219,3 @@ and create the database to test it.
 
 ----------------------------------------------------
 
-
- 
-
-
-
-
-
-
-
-
-
-
- {% include 'includes/footer-about.html' %}
-
-
-
-
-
-{% endblock content %}
-
-
-{% block javascripts %}{% endblock javascripts %}
-
